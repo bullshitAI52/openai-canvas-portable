@@ -5,3 +5,5 @@
 .reference-role{width:100%;margin:8px 0 2px;padding:5px;font-size:11px}
 #history-dialog{width:min(850px,90vw);max-height:85vh;overflow:auto}
 .history-entry{border-top:1px solid #354052;padding:16px 0}.history-entry h3{margin:0;font-size:14px}.history-entry p{font-size:12px;color:#aab6c9}.history-images{display:flex;gap:10px;overflow:auto;margin-bottom:12px}.history-images img{width:150px;height:110px;object-fit:contain;border-radius:8px;background:#0e131b}.history-entry pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;max-height:220px;overflow:auto}.history-entry details{margin:12px 0}
+
+#template-dialog{width:min(700px,90vw);max-height:85vh;overflow:auto}#template-dialog select,#template-preview{display:block;width:100%;margin:8px 0 14px}#template-preview{min-height:190px;line-height:1.7}#task-status{position:fixed;bottom:55px;left:20px;max-width:70vw;padding:10px 16px;background:#202d40;border:1px solid #536b8e;border-radius:10px;font-size:12px;z-index:40}.error{white-space:pre-wrap}nav{flex-wrap:wrap}header{min-height:54px}

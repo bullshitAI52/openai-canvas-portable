@@ -19,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import engine
 
 APP_ID = 'openai-canvas-portable'
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 ROOT = Path(__file__).resolve().parent
 if os.environ.get('OPENAI_CANVAS_DATA_DIR'):
     DATA = Path(os.environ['OPENAI_CANVAS_DATA_DIR']).expanduser().resolve()

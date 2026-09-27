@@ -35,9 +35,9 @@
 
 | 电脑 | 下载 | ZIP 大小 | 双击启动文件 |
 | --- | --- | --- | --- |
-| Windows 10/11，Intel 或 AMD 64 位 | [Windows x64](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-Windows-x64.zip) | 18.4 MB | `Start-Windows.bat` |
-| Mac，M1/M2/M3/M4 等苹果芯片 | [Mac Apple Silicon](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-macOS-AppleSilicon.zip) | 30.9 MB | `Start-macOS.command` |
-| Mac，Intel 处理器 | [Mac Intel](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-macOS-Intel.zip) | 31.3 MB | `Start-macOS.command` |
+| Windows 10/11，Intel 或 AMD 64 位 | [Windows x64](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.2.0/OpenAI-Canvas-Windows-x64.zip) | 18.4 MB | `Start-Windows.bat` |
+| Mac，M1/M2/M3/M4 等苹果芯片 | [Mac Apple Silicon](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.2.0/OpenAI-Canvas-macOS-AppleSilicon.zip) | 30.9 MB | `Start-macOS.command` |
+| Mac，Intel 处理器 | [Mac Intel](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.2.0/OpenAI-Canvas-macOS-Intel.zip) | 31.3 MB | `Start-macOS.command` |
 
 Mac 可在苹果菜单 →「关于本机」查看芯片类型。Mac 包以 macOS 11 及以上为目标；Windows ARM 设备没有原生包，未进行兼容性验证。
 
@@ -265,3 +265,14 @@ docs/preview.png  界面截图
 - 升级：先退出旧版服务，解压新版便携包后启动。使用同一系统账户和默认数据目录时，会继续读取已有密钥、工作流和输出文件。
 
 本次使用模拟 API 验证 17 项后端测试及前端回归，并检查浏览器中的标签和历史复用。未进行真实付费生图；Windows 仍未进行实机测试。
+
+## v1.2.0：提示词模板与运行提示
+
+- 顶部「提示词模板」提供单人换装、双人海报、商品展示、场景融合四种模板。
+- 选择目标 LLM INPUT 或 API生成 PROMPTS，预览并编辑内容，再点击「替换目标提示词」或「追加到目标提示词」。仅填入文字，不自动执行；替换会覆盖目标原有提示词，追加保留原内容。
+- 模板中的图号占位符需要按实际连线填写；直接用于生图时请去掉要求语言模型输出提示词的语句。
+- 运行时显示当前步骤和实时耗时。一键执行区分分析提示词和图片生成两步；耗时不代表进度百分比。
+- 失败时在对应节点保留错误详情与处理建议，覆盖密钥、额度、限流、模型权限、网络和内容限制等情况。不会自动重试付费请求。
+- 网络中断、超时或服务异常时，先查看历史与输出目录，确认是否已有结果再决定重试。
+
+验证：原有 17 项后端测试通过；新增模板与错误建议测试、两步执行状态及失败后停止后续调用的测试通过。未调用真实付费 API。

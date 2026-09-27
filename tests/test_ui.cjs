@@ -13,3 +13,13 @@ console.log('9 UI regression scenarios passed');
 const legacy=context.fixture();delete legacy.nodes[0].role;assert.equal(context.check(legacy).nodes[0].role,'未指定');
 const invalidRole=context.fixture();invalidRole.nodes[0].role='invalid';assert.throws(()=>context.check(invalidRole));
 console.log('Role migration and validation passed');
+vm.runInContext('this.advice=failureAdvice;this.templates=PROMPT_TEMPLATES;',context);
+assert.equal(context.templates.length,4);
+assert.match(context.advice('OpenAI API 401'),/密钥/);
+assert.match(context.advice('OpenAI API 429 insufficient_quota'),/额度/);
+assert.match(context.advice('OpenAI API 429 rate_limit'),/频繁/);
+assert.match(context.advice('OpenAI API 404 model_not_found'),/模型/);
+assert.match(context.advice('Failed to fetch'),/避免/);
+console.log('Template catalog and error guidance passed');
+
+assert.match(context.advice('请先上传已连接的参考图'),/检查输入/);
