@@ -1,4 +1,5 @@
 """Local-only OpenAI Canvas. No ComfyUI or machine-learning runtime required."""
+from datetime import datetime, timezone
 import argparse
 import base64
 import json
@@ -18,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import engine
 
 APP_ID = 'openai-canvas-portable'
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 ROOT = Path(__file__).resolve().parent
 if os.environ.get('OPENAI_CANVAS_DATA_DIR'):
     DATA = Path(os.environ['OPENAI_CANVAS_DATA_DIR']).expanduser().resolve()
@@ -57,6 +58,23 @@ def validate_workflow(value):
     if any(not isinstance(node, dict) or 'api_key' in node for node in nodes) or 'api_key' in value:
         raise ValueError('工作流不得保存 API Key')
     return value
+
+
+def reference_labels(data, images):
+    labels = data.get('labels', [])
+    if not isinstance(labels, list) or (labels and len(labels) != len(images)):
+        raise ValueError('参考图标签数量不匹配')
+    allowed = {'未指定', '人物', '服装', '场景', '动作构图', '商品', '风格'}
+    if any(not isinstance(label, str) or label not in allowed for label in labels):
+        raise ValueError('参考图角色标签无效')
+    return labels
+
+
+def labeled_prompt(prompt, labels):
+    if not labels or all(label == '未指定' for label in labels):
+        return prompt
+    return prompt + '\n\n参考图角色（按输入顺序）：\n' + '\n'.join(
+        f'图{i + 1}：{label}' for i, label in enumerate(labels))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -107,6 +125,27 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json_response(200, {'workflow': value})
             except (ValueError, OSError):
                 return self.json_response(500, {'error': '已保存工作流无法读取，请从导出的 JSON 恢复。'})
+        if path == '/openai-canvas/history':
+            records = []
+            with file_lock:
+                for item in (DATA / 'history').glob('*.json'):
+                    try:
+                        entry = json.loads(item.read_text(encoding='utf-8'))
+                        records.append({k: entry[k] for k in ('id', 'created_at', 'images', 'parameters')})
+                    except (OSError, ValueError, KeyError):
+                        continue
+            records.sort(key=lambda entry: entry['created_at'], reverse=True)
+            return self.json_response(200, {'history': records})
+        if path.startswith('/openai-canvas/history/'):
+            identifier = path.rsplit('/', 1)[-1]
+            if not re.fullmatch(r'[a-f0-9]{32}', identifier):
+                return self.json_response(400, {'error': '历史记录编号无效'})
+            try:
+                with file_lock:
+                    value = json.loads((DATA / 'history' / (identifier + '.json')).read_text(encoding='utf-8'))
+                return self.json_response(200, value)
+            except (OSError, ValueError):
+                return self.json_response(404, {'error': '历史记录不存在或无法读取'})
         file = None
         if path in {'/', '/openai-canvas', '/openai-canvas/'}:
             file = ROOT / 'studio/index.html'
@@ -165,6 +204,8 @@ class Handler(BaseHTTPRequestHandler):
             model = data.get('model')
             if not isinstance(prompt, str) or not prompt.strip() or not isinstance(images, list) or not isinstance(model, str) or not model.strip():
                 raise ValueError('提示词、图片列表或模型名称格式错误')
+            labels = reference_labels(data, images)
+            effective_prompt = labeled_prompt(prompt, labels)
             if not api_lock.acquire(blocking=False):
                 return self.json_response(409, {'error': '另一窗口已有任务运行，请等待完成，避免重复计费。'})
             try:
@@ -172,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
                     system = data.get('system', engine.SYSTEM)
                     if not isinstance(system, str):
                         raise ValueError('System 提示词必须是文本')
-                    text = engine.refine(prompt, images, model, system)
+                    text = engine.refine(effective_prompt, images, model, system)
                     self.json_response(200, {'text': text})
                 else:
                     count = data.get('count', 1)
@@ -181,14 +222,25 @@ class Handler(BaseHTTPRequestHandler):
                     size, quality = data.get('size', '1536x864'), data.get('quality', 'auto')
                     if not isinstance(size, str) or not re.fullmatch(r'\d+x\d+', size) or quality not in ['auto', 'low', 'medium', 'high']:
                         raise ValueError('尺寸或质量参数错误')
-                    values = engine.generate(prompt, images, model, size, quality, count)
+                    values = engine.generate(effective_prompt, images, model, size, quality, count)
                     OUTPUT.mkdir(parents=True, exist_ok=True)
                     files = []
                     for value in values:
                         name = uuid.uuid4().hex + '.png'
                         (OUTPUT / name).write_bytes(base64.b64decode(value, validate=True))
                         files.append({'filename': name, 'subfolder': 'OpenAI-Canvas', 'type': 'output'})
-                    self.json_response(200, {'images': files})
+                    identifier = uuid.uuid4().hex
+                    record = {'id': identifier, 'created_at': datetime.now(timezone.utc).isoformat(),
+                              'images': files, 'parameters': {'prompt': prompt, 'model': model,
+                              'size': size, 'quality': quality, 'count': count},
+                              'references': images, 'labels': labels, 'effective_prompt': effective_prompt}
+                    warning = None
+                    try:
+                        with file_lock:
+                            atomic_json(DATA / 'history' / (identifier + '.json'), record)
+                    except OSError:
+                        warning = '图片已保存，但历史记录写入失败，请检查磁盘空间。'
+                    self.json_response(200, {'images': files, 'history_id': identifier if not warning else None, 'warning': warning})
             finally:
                 api_lock.release()
         except (ValueError, TypeError) as exc:

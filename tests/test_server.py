@@ -62,6 +62,23 @@ class PortableTests(unittest.TestCase):
   with patch.object(engine,'generate',return_value=[encoded]):
    code,body=self.request('/openai-canvas/generate',{'prompt':'test','model':'test','images':[],'size':'1536x864','quality':'auto','count':1});self.assertEqual(code,200)
    file=json.loads(body)['images'][0];code,body=self.request('/view?filename='+file['filename']);self.assertEqual(code,200);self.assertEqual(body,image.getvalue())
+ def test_history_and_roles(self):
+  image=io.BytesIO();Image.new('RGB',(2,2)).save(image,format='PNG');encoded=base64.b64encode(image.getvalue()).decode()
+  request={'prompt':'history test','model':'test','images':['reference'],'labels':['服装'],'size':'1024x1024','count':1}
+  with patch.object(engine,'generate',return_value=[encoded]) as call:
+   code,body=self.request('/openai-canvas/generate',request);self.assertEqual(code,200)
+   self.assertIn('图1：服装',call.call_args.args[0]);identifier=json.loads(body)['history_id']
+  code,body=self.request('/openai-canvas/history/'+identifier);self.assertEqual(code,200)
+  entry=json.loads(body);self.assertEqual(entry['references'],['reference']);self.assertEqual(entry['parameters']['prompt'],'history test');self.assertEqual(entry['labels'],['服装'])
+  records=json.loads(self.request('/openai-canvas/history')[1])['history'];self.assertTrue(any(r['id']==identifier for r in records));self.assertTrue(all('references' not in r for r in records))
+ def test_bad_roles_rejected_before_api(self):
+  with patch.object(engine,'generate') as call:
+   for labels in [['bad'],['人物','服装']]:
+    self.assertEqual(self.request('/openai-canvas/generate',{'prompt':'test','model':'test','images':['ref'],'labels':labels})[0],400)
+   call.assert_not_called()
+ def test_history_write_failure_keeps_results(self):
+  with patch.object(engine,'generate',return_value=[base64.b64encode(b'image').decode()]),patch.object(app,'atomic_json',side_effect=OSError()):
+   code,body=self.request('/openai-canvas/generate',{'prompt':'test','model':'test'});self.assertEqual(code,200);result=json.loads(body);self.assertTrue(result['images']);self.assertTrue(result['warning']);self.assertIsNone(result['history_id'])
  def test_no_path_traversal(self):
   for path in ['/view?filename=../config.local.json','/openai-canvas/assets/engine.py','/config.local.json']:
    self.assertEqual(self.request(path)[0],404)

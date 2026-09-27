@@ -9,3 +9,7 @@ assert.equal(context.resolution('1920x1280'),'2K');assert.equal(context.resoluti
 for(const mutate of [s=>s.nodes.push({...s.nodes[0]}),s=>s.edges.push(['o1','l1']),s=>s.edges.push(s.edges[0]),s=>s.nodes.find(n=>n.type==='output').images='bad',s=>s.nodes.find(n=>n.type==='generate').count=1.5,s=>s.nodes.find(n=>n.type==='generate').size=null]){const value=context.fixture();mutate(value);assert.throws(()=>context.check(value));}
 const old=context.fixture();delete old.nodes.find(n=>n.type==='llm').system;context.check(old);assert.equal(typeof old.nodes.find(n=>n.type==='llm').system,'string');
 console.log('9 UI regression scenarios passed');
+
+const legacy=context.fixture();delete legacy.nodes[0].role;assert.equal(context.check(legacy).nodes[0].role,'未指定');
+const invalidRole=context.fixture();invalidRole.nodes[0].role='invalid';assert.throws(()=>context.check(invalidRole));
+console.log('Role migration and validation passed');

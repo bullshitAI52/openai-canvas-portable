@@ -23,6 +23,8 @@
 | 单步或一键执行 | 只运行 LLM、只运行生图，或一键先分析再生成 |
 | 参数调整 | 编辑模型名称，选择尺寸、画幅、质量及生成数量 |
 | 保存与下载 | 本机自动保存画布和参考图，导入/导出工作流，查看及下载生成原图 |
+| 生成历史 | 自动保存成功生成的图片、提示词、模型参数和参考图；一键复用为新节点 |
+| 参考图角色 | 为图片选择人物、服装、场景、动作构图、商品或风格，并随图号传给模型 |
 | 并发保护 | 同一后台服务一次只执行一个 API 任务，避免多个窗口同时重复运行 |
 
 人物、衣服细节和布局的一致性由生成模型决定，不保证像素级复刻，也不是精确的服装尺寸模拟或传统图层编辑软件。
@@ -33,9 +35,9 @@
 
 | 电脑 | 下载 | ZIP 大小 | 双击启动文件 |
 | --- | --- | --- | --- |
-| Windows 10/11，Intel 或 AMD 64 位 | [Windows x64](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.0.0/OpenAI-Canvas-Windows-x64.zip) | 18.4 MB | `Start-Windows.bat` |
-| Mac，M1/M2/M3/M4 等苹果芯片 | [Mac Apple Silicon](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.0.0/OpenAI-Canvas-macOS-AppleSilicon.zip) | 30.9 MB | `Start-macOS.command` |
-| Mac，Intel 处理器 | [Mac Intel](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.0.0/OpenAI-Canvas-macOS-Intel.zip) | 31.3 MB | `Start-macOS.command` |
+| Windows 10/11，Intel 或 AMD 64 位 | [Windows x64](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-Windows-x64.zip) | 18.4 MB | `Start-Windows.bat` |
+| Mac，M1/M2/M3/M4 等苹果芯片 | [Mac Apple Silicon](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-macOS-AppleSilicon.zip) | 30.9 MB | `Start-macOS.command` |
+| Mac，Intel 处理器 | [Mac Intel](https://github.com/bullshitAI52/openai-canvas-portable/releases/download/v1.1.0/OpenAI-Canvas-macOS-Intel.zip) | 31.3 MB | `Start-macOS.command` |
 
 Mac 可在苹果菜单 →「关于本机」查看芯片类型。Mac 包以 macOS 11 及以上为目标；Windows ARM 设备没有原生包，未进行兼容性验证。
 
@@ -252,3 +254,14 @@ docs/preview.png  界面截图
 ```
 
 便携包附带运行环境来源、哈希及第三方许可证；Release 中的 `SHA256SUMS.txt` 可用于校验下载完整性。
+
+## v1.1.0：生成历史与参考图标签
+
+- 点击顶部「生成历史」查看新版本中成功生成的结果、提示词及参数。点击缩略图可打开原图。
+- 点击「复用为新的一组节点」会恢复参考图、角色标签、生图提示词和参数，并新增 API生成、OUTPUT 节点。原画布保留；不会自动调用 API，点击「API生成」后才执行。
+- 每个 IMAGE 图片下方可选择角色。角色会自动保存、随工作流导出，并按实际连线顺序加入发送给模型的提示词。旧工作流没有标签时显示「未指定」，不会推测角色；标签不改变图号，请确保文字要求与标签一致。
+- 历史保存在用户数据目录的 `history/`，原图仍在 `outputs/`。历史包含参考图副本，不包含 API Key；会随使用占用磁盘空间。仅导出工作流不会打包全部历史。
+- v1.0.0 的旧结果不会自动补建历史，因为当时未保存完整生成参数。
+- 升级：先退出旧版服务，解压新版便携包后启动。使用同一系统账户和默认数据目录时，会继续读取已有密钥、工作流和输出文件。
+
+本次使用模拟 API 验证 17 项后端测试及前端回归，并检查浏览器中的标签和历史复用。未进行真实付费生图；Windows 仍未进行实机测试。
