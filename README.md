@@ -8,6 +8,10 @@
 
 > 本项目不是 OpenAI 官方产品。需要自己的 OpenAI API Key、可用额度及能访问 OpenAI API 的网络。API 按用量计费，不使用 ChatGPT 网页订阅额度。
 
+## 提示词示例
+
+[截图 INPUT 提取与双人物换装示例](prompts/screenshot-input.md)包含截图转录、辨读说明和可直接复制的六图整理版；也可下载[整理版纯文本](prompts/two-person-outfit.txt)。使用前请核对参考图编号。
+
 ## 主要功能
 
 | 功能 | 可以做什么 |
