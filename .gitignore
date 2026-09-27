@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+config.local.json
+workflow.json
+*.tmp
+*.log
+*.zip
+runtime/
+data/
+outputs/
+.DS_Store
